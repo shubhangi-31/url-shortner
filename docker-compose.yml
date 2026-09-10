@@ -1,0 +1,21 @@
+services:
+
+  mysql:
+    image: mysql:8.4
+    container_name: url-shortner-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: url_shortner
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    container_name: url-shortner-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mysql_data:
