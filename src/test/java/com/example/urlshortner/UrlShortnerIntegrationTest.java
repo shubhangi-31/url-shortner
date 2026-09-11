@@ -23,13 +23,13 @@ class UrlShortnerIntegrationTest {
     @Test
     void shouldSaveAndRetrieveUrlFromDatabase() {
 
+        String originalUrl =
+                "https://integration-test-" + System.currentTimeMillis() + ".example.com";
+
         Url url = new Url();
 
-        url.setOriginalUrl(
-                "https://integration-test.example.com"
-        );
-
-        url.setShortCode("integration1");
+        url.setOriginalUrl(originalUrl);
+        url.setShortCode("integration" + System.currentTimeMillis());
         url.setCreatedAt(LocalDateTime.now());
 
         Url savedUrl = urlRepository.save(url);
@@ -37,11 +37,11 @@ class UrlShortnerIntegrationTest {
         assertNotNull(savedUrl.getId());
 
         Url retrievedUrl = urlRepository
-                .findByShortCode("integration1")
+                .findByShortCode(url.getShortCode())
                 .orElseThrow();
 
         assertEquals(
-                "https://integration-test.example.com",
+                originalUrl,
                 retrievedUrl.getOriginalUrl()
         );
     }
