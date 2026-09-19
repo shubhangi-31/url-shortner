@@ -411,7 +411,95 @@ This project demonstrates practical implementation of:
 
 ---
 
-## 🔮 Future Improvements
+## Performance Benchmark
+
+Redis caching was benchmarked locally to measure its impact on URL lookup latency.
+
+### Benchmark setup
+
+- Application: Spring Boot running locally on `localhost:8080`
+- Database: MySQL 8.4 running in Docker
+- Cache: Redis running in Docker
+- Endpoint: `GET /api/urls/{shortCode}`
+- Test URL: `https://www.wikipedia.org`
+- Short code: `2`
+- Redis TTL: 1 hour
+- Tool: `curl`
+- Metric: Total HTTP response time
+
+### Methodology
+
+1. The Redis entry for the test URL was removed to ensure a cache miss:
+
+```bash
+docker exec -it url-shortner-redis redis-cli DEL url:2
+````
+
+2. The first request was measured using `curl`:
+
+```bash
+curl.exe -o NUL -s -w "MISS: %{time_total}s\n" http://localhost:8080/api/urls/2
+```
+
+Result:
+
+```text
+MISS: 0.022534s
+```
+
+This request followed the cache-miss flow:
+
+```text
+Client → Redis MISS → MySQL → Store in Redis → Response
+```
+
+3. The same endpoint was then requested five times while the URL was cached:
+
+```bash
+curl.exe -o NUL -s -w "HIT: %{time_total}s\n" http://localhost:8080/api/urls/2
+```
+
+Results:
+
+```text
+HIT: 0.006466s
+HIT: 0.006438s
+HIT: 0.005395s
+HIT: 0.006571s
+HIT: 0.007075s
+```
+
+### Results
+
+| Scenario                  | Response Time |
+| ------------------------- | ------------: |
+| Redis cache miss          |      22.53 ms |
+| Redis cache hit (average) |       6.39 ms |
+| Latency reduction         |    **~71.6%** |
+
+The average Redis cache-hit latency was calculated from five consecutive requests:
+
+```text
+(6.466 + 6.438 + 5.395 + 6.571 + 7.075) / 5
+= 6.389 ms
+```
+
+Latency reduction:
+
+```text
+((22.534 - 6.389) / 22.534) × 100
+≈ 71.6%
+```
+
+### Conclusion
+
+In this local benchmark, serving URL lookups from Redis reduced observed response latency by approximately **71.6%**, from **22.5 ms** on a cache miss to **6.4 ms** on average for a cache hit.
+
+> **Note:** These results are from a local development environment and are intended to demonstrate the performance impact of the cache-aside strategy. They are not representative of production performance under real-world traffic.
+
+---
+
+### 🔮 Future Improvements
 
 Potential enhancements:
 
